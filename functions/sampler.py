@@ -4,13 +4,14 @@ import pandas as pd
 class SAMPLE: 
 
     
-    def __init__(self, data, sample, text, topic, Language, time):
+    def __init__(self, data, sample, text, topic, label, Language, time):
 
 
         self.data = data
         self.sample = sample
         self.text = text
         self.topic = topic
+        self.label = label
         self.Language = Language
         self.time = time
 
@@ -19,7 +20,7 @@ class SAMPLE:
         corpus = self.data
 
         lista = []
-        diz = dict({'topic': self.topic, 'text': self.text, 'Language':self.Language, 'time': self.time})
+        diz = dict({'topic': self.topic, 'label': self.label, 'text': self.text, 'Language':self.Language, 'time': self.time})
         diz_final = {}
         for key in list(dict.fromkeys(diz)):
             if diz[key] != None:

@@ -3,11 +3,11 @@ import kmeans
 import preprocessing
 import DOC2VEC
 import sampler
-
+import manage_time
 
 class SampleView:
     ''' 
-    questa è la funzione principale che permette di settare i parametri di quelle successive. 
+    questa è la funzione principale che permette di i parametri di quelle successive. 
     questa funzione prende in input: 
 
     - corpus -> un data frame pandas 
@@ -24,34 +24,25 @@ class SampleView:
       Di default 1
     - emb_epochs -> numero di epoche di allenamento dell'algoritmo -> di default 10
     '''
-    def __init__(self, corpus, sample=1000, text=None, topic=None, Language=None, time=None):
+    def __init__(self, corpus, sample=1000, text=None, topic=None, label = None, Language=None, time=None):
         self.corpus = corpus
         self.text = text
         self.topic=topic
+        self.label = label
         self.Language = Language
         self.time=time
         self.sample = sample
-
-    
-
-
-    #FUNZIONE AUSILIARE PER VARIABILE TIME
-    def assegna_intervallo(self, valore, intervalli):
-        for i, intervallo in enumerate(intervalli):
-            if valore >= intervallo[0] and valore <= intervallo[1]:
-                return intervallo
-        return None
-
-
 
         
     def Sampler(self, vector_size=100, window=5, min_count=1, workers = 1, emb_epochs=10, cluster = 'Kmeans'):
         corpus = self.corpus
         text = self.text
         topic = self.topic
+        label = self.label
         Language = self.Language 
         time = self.time
         sample = self.sample
+        
         
 
         if text!=None:
@@ -59,21 +50,10 @@ class SampleView:
 
             if time != None: 
 
-                min = corpus[time].min()
-                max = corpus[time].max()
-                ampiezza_intervallo = (max - min) / 5
+                model_time = manage_time.TIME(corpus, time)
+                corpus = model_time.create_groups()
 
-                intervalli = []
-                valore_inizio = min
-                valore_fine = valore_inizio + ampiezza_intervallo
-
-                for i in range(5):
-                    intervalli.append((valore_inizio, valore_fine))
-                    valore_inizio = valore_fine
-                    valore_fine = valore_inizio + ampiezza_intervallo
-
-
-                corpus['tquantile']=corpus[time].apply(lambda x: self.assegna_intervallo(x, intervalli))
+    
 
 
 
@@ -90,36 +70,15 @@ class SampleView:
             elif cluster=='Kmeans':
                 classe_kmeans = kmeans.Kmeans(df, corpus)
                 corpus=classe_kmeans.cluster_KMEANS()
-
-
         
         else:
 
-            
-
             if time!=None:
-                min = corpus[time].min()
-                max = corpus[time].max()
-                ampiezza_intervallo = (max - min) / 5
-                intervalli = []
-                valore_inizio = min
-                valore_fine = valore_inizio + ampiezza_intervallo
-
-                for i in range(5):
-                    intervalli.append((valore_inizio, valore_fine))
-                    valore_inizio = valore_fine
-                    valore_fine = valore_inizio + ampiezza_intervallo
-
-
-                corpus['tquantile']=corpus[time].apply(lambda x: self.assegna_intervallo(x, intervalli))
+                model_time = manage_time.TIME(corpus, time)
+                corpus = model_time.create_groups()
 
 
 
-        model_samp = sampler.SAMPLE(corpus, sample, text, topic, Language, time)
+        model_samp = sampler.SAMPLE(corpus, sample, text, topic, label, Language, time)
         campione = model_samp.sampling()
         return campione
-        
-
-        
-
- 
