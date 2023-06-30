@@ -1,9 +1,7 @@
-import som
-import kmeans
+import clustering
 import preprocessing
 import DOC2VEC
 import sampler
-import manage_time
 
 class SampleView:
     ''' 
@@ -24,7 +22,7 @@ class SampleView:
       Di default 1
     - emb_epochs -> numero di epoche di allenamento dell'algoritmo -> di default 10
     '''
-    def __init__(self, corpus, sample=1000, text=None, topic=None, label = None, Language=None, time=None):
+    def __init__(self, corpus, sample=1000, sampling_var = []):
         self.corpus = corpus
         self.text = text
         self.topic=topic
@@ -34,7 +32,7 @@ class SampleView:
         self.sample = sample
 
         
-    def Sampler(self, vector_size=100, window=5, min_count=1, workers = 1, emb_epochs=10, cluster = 'Kmeans'):
+    def SamplerView(self, vector_size=100, window=5, min_count=1, workers = 1, emb_epochs=10, cluster = 'Kmeans'):
         corpus = self.corpus
         text = self.text
         topic = self.topic
@@ -43,42 +41,29 @@ class SampleView:
         time = self.time
         sample = self.sample
         
-        
 
         if text!=None:
- 
-
-            if time != None: 
-
-                model_time = manage_time.TIME(corpus, time)
-                corpus = model_time.create_groups()
-
-    
-
-
-
-            clean = preprocessing.Preprocessing(corpus, text)
-            corpus = clean.pulizia()
             model_doc = DOC2VEC.doc2vec(corpus, vector_size, window, min_count, workers, emb_epochs)
             df = model_doc.embedding()
-            if cluster=='SOM':
-                classe_som=som.SOM(df, corpus)
-                corpus = classe_som.cluster_som()
+            corpus = clustering.perform_cluster(data: df, cluster_algo: str, **kwargs)
+
+        campione = sampling(corpus, sampling_var)
 
 
-
-            elif cluster=='Kmeans':
-                classe_kmeans = kmeans.Kmeans(df, corpus)
-                corpus=classe_kmeans.cluster_KMEANS()
-        
-        else:
-
-            if time!=None:
-                model_time = manage_time.TIME(corpus, time)
-                corpus = model_time.create_groups()
-
-
-
-        model_samp = sampler.SAMPLE(corpus, sample, text, topic, label, Language, time)
-        campione = model_samp.sampling()
         return campione
+
+def sampling(corpus, lista):
+    dfNew=pd.DataFrame() 
+    dfNew = corpus.groupby(lista).size().reset_index(name='Frequencies')
+    dfNew['Proportion'] = dfNew['Frequencies'].transform(lambda x: x / x.sum())
+    dfNew['category_sample']=dfNew['Proportion'].progress_apply(lambda x: int(round(x * self.sample)))
+
+    campione=pd.DataFrame()
+    for index, row in dfNew.iterrows():
+        category_data = corpus
+        num_samples = int(row['category_sample'])
+        for key in diz_final:
+            category_data = category_data.loc[(category_data[diz_final[key]] == row[diz_final[key]])]
+            samples = pd.DataFrame(category_data.sample(num_samples))
+            campione=pd.concat([campione, samples])
+    return campione 
