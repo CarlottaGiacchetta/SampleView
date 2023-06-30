@@ -14,15 +14,15 @@ for el in tqdm(files):
 
     data = pd.read_csv(f'{el[0]}.csv', index_col=None)
     print(len(data))
-    model_sample = TextSampler.SampleView(data,text=el[1], topic = 'score', sample = int(len(data)/4))
+    model_sample = TextSampler.SampleView(data, text = el[1], sampling_var=['score'], sample = int(len(data)/4))
 
-    campione, list = model_sample.Sampler(vector_size=100, window=5, min_count=1, workers = 1, emb_epochs=10, cluster = 'Kmeans')
-    print(list)
+    campione, sampling_var = model_sample.SamplerView(vector_size=100, window=5, min_count=1, workers = 1, emb_epochs=10, cluster = 'kmeans')
+    print(sampling_var)
     print(campione)
     print(campione.keys())
 
     #PROPORZIONE SUL CORPUS
-    dfdata = data.groupby(list).size().reset_index(name='Frequencies')
+    dfdata = data.groupby(sampling_var).size().reset_index(name='Frequencies')
 
     dfdata['Proportion'] = dfdata['Frequencies'].transform(lambda x: x / x.sum())
 
@@ -33,7 +33,7 @@ for el in tqdm(files):
 
 
     #PROPORZIONE SUL CAMPIONE
-    dfs= campione.groupby(list).size().reset_index(name='Frequencies')
+    dfs= campione.groupby(sampling_var).size().reset_index(name='Frequencies')
 
     dfs['Proportion'] = dfs['Frequencies'].transform(lambda x: x / x.sum())
 
