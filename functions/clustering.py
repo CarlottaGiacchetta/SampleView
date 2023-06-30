@@ -1,10 +1,14 @@
 import pandas as pd
+import numpy as np
 from minisom import MiniSom
 from typing import Tuple, List
 from numpy import cumsum, argmax
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
+
+from scipy.spatial.distance import cdist
+
 
 
 def _pca(df: pd.DataFrame, var_threshold: float = 0.95) -> pd.DataFrame:
@@ -19,6 +23,36 @@ def _pca(df: pd.DataFrame, var_threshold: float = 0.95) -> pd.DataFrame:
                           columns=[f'PC_{i}' for i in range(1, num_components + 1)],
                           index=df.index)
     return df_pca
+
+def _dunn_index(X: np.ndarray, labels: List[int]) -> float:
+    unique_labels = np.unique(labels)
+    n_clusters = len(unique_labels)
+
+    # Calcola la distanza massima tra i punti all'interno di ogni cluster
+    intra_cluster_distances = np.array(
+        [np.max(cdist(X[labels == label], X[labels == label])) for label in unique_labels])
+
+    # Calcola la distanza minima tra i centroidi dei cluster
+    centroid_distances = cdist(
+        np.array([np.mean(X[labels == label], axis=0) for label in unique_labels]),
+        np.array([np.mean(X[labels == other_label], axis=0) for other_label in unique_labels]))
+
+    # Calcola l'Indice di Dunn
+    min_inter_cluster_distance = np.min(centroid_distances[np.nonzero(centroid_distances)])
+    max_intra_cluster_distance = np.max(intra_cluster_distances)
+    dunn_index = min_inter_cluster_distance / max_intra_cluster_distance
+
+    return dunn_index
+
+
+def evaluate_cluster(X: np.ndarray, labels: List[int], metric: str) -> float:
+    if metric == 'silhouette_score':
+        score = silhouette_score(X, labels)
+    elif metric == 'dunn':
+        score = _dunn_index(X, labels)
+    else:
+        raise ValueError("Invalid evaluation metrics. Try with silhouette_score")
+    return score
 
 
 def _get_best_n_cluster(data: pd.DataFrame, seed: int = 42) -> int:
@@ -44,7 +78,6 @@ def _get_best_n_cluster(data: pd.DataFrame, seed: int = 42) -> int:
 def _kmeans_clustering(data: pd.DataFrame, use_pca: bool = True, n_cluster: int = None, seed: int = 42) -> List[int]:
     if use_pca:
         data = _pca(data)
-        print(data)
     if not n_cluster:
         n_cluster = _get_best_n_cluster(data, seed)
 
@@ -85,7 +118,6 @@ def perform_cluster(data: pd.DataFrame, cluster_algo: str, **kwargs) -> pd.DataF
         kwargs = {key: value for key, value in kwargs.items() if key in som_parameters}
         label = _som_clustering(data, **kwargs)
     else:
-        raise ValueError("Invalid clustering algorithm")
+        raise ValueError("Invalid clustering algorithm. Try with kmeans o SOM")
 
-    data['cluster'] = label
-    return data
+    return label
