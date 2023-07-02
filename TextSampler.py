@@ -41,7 +41,8 @@ class SampleView:
         self.variables = None
         self.clu_parameters = None
 
-    def sample(self, frac: float, sampling_var: List[str], text_var: str = None, use_pca: bool = True,
+    def sample(self, frac: float, sampling_var: List[str], text_var: str = None,
+               use_pca: bool = True, n_clusters: int = None,
                emb_algo: str = 'Doc2Vec', vector_size: int = 100, window: int = 5, min_count: int = 1, workers: int = 1,
                emb_epochs: int = 10,
                cluster_algo: str = 'kmeans', seed: int = 42):
