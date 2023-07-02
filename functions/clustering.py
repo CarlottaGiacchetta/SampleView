@@ -10,7 +10,6 @@ from sklearn.metrics import silhouette_score
 from scipy.spatial.distance import cdist
 
 
-
 def _pca(df: pd.DataFrame, var_threshold: float = 0.95) -> pd.DataFrame:
     # FUNZIONE CHE FA PCA -> SI PRENDONO LE COMPONENTI PRINCIPALI CHE RIPRODUCONO ALMENO IL 95% DI VARIANZA CUMULATA
     pca_model = PCA()
@@ -24,18 +23,18 @@ def _pca(df: pd.DataFrame, var_threshold: float = 0.95) -> pd.DataFrame:
                           index=df.index)
     return df_pca
 
-def _dunn_index(X: np.ndarray, labels: List[int]) -> float:
+
+def _dunn_index(data: np.ndarray, labels: List[int]) -> float:
     unique_labels = np.unique(labels)
-    n_clusters = len(unique_labels)
 
     # Calcola la distanza massima tra i punti all'interno di ogni cluster
     intra_cluster_distances = np.array(
-        [np.max(cdist(X[labels == label], X[labels == label])) for label in unique_labels])
+        [np.max(cdist(data[labels == label], data[labels == label])) for label in unique_labels])
 
     # Calcola la distanza minima tra i centroidi dei cluster
     centroid_distances = cdist(
-        np.array([np.mean(X[labels == label], axis=0) for label in unique_labels]),
-        np.array([np.mean(X[labels == other_label], axis=0) for other_label in unique_labels]))
+        np.array([np.mean(data[labels == label], axis=0) for label in unique_labels]),
+        np.array([np.mean(data[labels == other_label], axis=0) for other_label in unique_labels]))
 
     # Calcola l'Indice di Dunn
     min_inter_cluster_distance = np.min(centroid_distances[np.nonzero(centroid_distances)])
@@ -45,11 +44,11 @@ def _dunn_index(X: np.ndarray, labels: List[int]) -> float:
     return dunn_index
 
 
-def evaluate_cluster(X: np.ndarray, labels: List[int], metric: str) -> float:
+def evaluate_cluster(data: np.ndarray, labels: List[int], metric: str) -> float:
     if metric == 'silhouette_score':
-        score = silhouette_score(X, labels)
+        score = silhouette_score(data, labels)
     elif metric == 'dunn':
-        score = _dunn_index(X, labels)
+        score = _dunn_index(data, labels)
     else:
         raise ValueError("Invalid evaluation metrics. Try with silhouette_score")
     return score
@@ -108,7 +107,7 @@ def _som_clustering(data: pd.DataFrame, map_size: Tuple[int, int] = (5, 5), n_ep
     return [value for key, value in sorted(mapped_dict.items())]
 
 
-def perform_cluster(data: pd.DataFrame, cluster_algo: str, **kwargs) -> pd.DataFrame:
+def perform_cluster(data: pd.DataFrame, cluster_algo: str, **kwargs) -> list:
     if cluster_algo == 'kmeans':
         kmeans_parameters = _kmeans_clustering.__code__.co_varnames[:_kmeans_clustering.__code__.co_argcount]
         kwargs = {key: value for key, value in kwargs.items() if key in kmeans_parameters}
