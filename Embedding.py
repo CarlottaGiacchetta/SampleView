@@ -20,7 +20,7 @@ def doc2vec(data, vector_size: int = 100, window: int = 5, min_count: int = 5, e
         document_vectors[i] = model.dv[i]
     df = pd.DataFrame.from_dict(document_vectors, orient='index')
     df = df.apply(lambda x: pd.Series(x), axis=1)
-    return df, {'vector_size': vector_size, 'window': window, 'min_count': min_count, 'epochs': epochs, 'workers': workers}
+    return df, {'model': 'Doc2Vec', 'vector_size': vector_size, 'window': window, 'min_count': min_count, 'epochs': epochs, 'workers': workers}
 
 
 def perform_embedding(data: pd.DataFrame, emb_algo: str,  **kwargs) -> Tuple[Any, dict[str, int]]:
