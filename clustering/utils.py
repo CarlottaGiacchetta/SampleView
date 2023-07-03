@@ -13,7 +13,7 @@ def pca(df: pd.DataFrame, seed, var_threshold: float = 0.95) -> pd.DataFrame:
     pca_model = PCA(random_state=seed)
     pca_model.fit(df)
     variance_ratio_cumulative = cumsum(pca_model.explained_variance_ratio_)
-    num_components = argmax(variance_ratio_cumulative >= var_threshold) + 1
+    num_components = max(2, argmax(variance_ratio_cumulative >= var_threshold) + 1)
     pca_selected = PCA(n_components=num_components, random_state=seed)
     data_transformed = pca_selected.fit_transform(df)
     df_pca = pd.DataFrame(data=data_transformed,
