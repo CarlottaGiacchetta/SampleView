@@ -8,8 +8,6 @@ from typing import List, Dict
 import pandas as pd
 import numpy as np
 
-from sklearn.datasets import make_blobs
-
 
 class SampleView:
     """
@@ -37,11 +35,14 @@ class SampleView:
         self.data = data
 
         self.seed = None
+        self.frac = None
         self.sampling_var = None
         self.text_var = None
+        self.emb_model_params = None
         self.vec = None
         self.variables = None
         self.clu_parameters = None
+        self.data_sample = None
 
     def sample(self, frac: float, sampling_var: List[str], text_var: str = None,
                use_pca: bool = True, cluster_algo: str = 'kmeans', n_clusters: int = None,
@@ -49,14 +50,17 @@ class SampleView:
                min_count: int = 1, workers: int = 3, emb_epochs: int = 10,
                seed: int = 42, **kwargs):
 
+        self.frac = frac
         self.seed = seed
         self.sampling_var = set(sampling_var)
         self.text_var = text_var
 
         if text_var:
-            #X, _ = make_blobs(n_samples=10000, n_features=4, random_state=1)
-            self.vec, self.emb_model_params = perform_embedding(self.data[text_var], emb_algo=emb_algo, vector_size=vector_size, window=window,
-                                         min_count=min_count, workers=workers, emb_epochs=emb_epochs, **kwargs)
+            # X, _ = make_blobs(n_samples=10000, n_features=4, random_state=1)
+            self.vec, self.emb_model_params = perform_embedding(self.data[text_var], emb_algo=emb_algo,
+                                                                vector_size=vector_size, window=window,
+                                                                min_count=min_count, workers=workers,
+                                                                emb_epochs=emb_epochs, **kwargs)
 
             if use_pca:
                 self.variables = pca(self.vec, self.seed)
@@ -70,10 +74,11 @@ class SampleView:
                                                                                seed=seed)
             self.sampling_var.add('cluster_labels')
             self.sampling_var = list(self.sampling_var)
-        self.sample = self.data.groupby(self.sampling_var).apply(lambda x: x.sample(int(round(x.shape[0]*0.8, 0))))
+        self.data_sample = self.data.groupby(self.sampling_var).apply(
+            lambda x: x.sample(int(round(x.shape[0] * frac, 0))))
         # self.sample, _ = train_test_split(self.data, train_size=frac, stratify=self.data[sampling_var],
         # random_state=seed)
-        return self.sample
+        return self.data_sample
 
     def cluster_evaluation(self, metric: str = 'silhouette_score') -> float:
         return evaluate_clusters(self.vec.values, self.data['cluster_labels'], metric)
@@ -95,3 +100,33 @@ class SampleView:
 
     def get_clustering_labels(self) -> List[int]:
         return self.data['cluster_labels'].to_list()
+
+    def __str__(self) -> str:
+        s = f"+{'-' * 30}+\n" \
+            f"|{'Sample summary':^30}|\n" \
+            f"+{'-' * 30}+\n" \
+            f"|{'Initial rows:':<14}{self.data.shape[0]:>12} row|\n"
+        if self.sampling_var:
+            s += f"|{'Sampling vars:':<25}{', '.join([x for x in self.sampling_var if x != 'cluster_labels']):>5}|\n"
+        if self.text_var:
+            s += f"|{'Sampling text var:':<19}{self.text_var:>11}|\n"
+        if self.emb_model_params:
+            s += f"+{'-' * 30}+\n" \
+                 f"|{'Embeddings parameters':^30}|\n" \
+                 f"+{'-' * 30}+\n"
+            for p in self.emb_model_params:
+                s += f"|{''.join([p, ':']):<20}{self.emb_model_params[p]:>10}|\n"
+        if self.clu_parameters:
+            s += f"+{'-' * 30}+\n" \
+                 f"|{'Clustering parameters':^30}|\n" \
+                 f"+{'-' * 30}+\n"
+            for p in self.clu_parameters:
+                s += f"|{''.join([p, ':']):<20}{self.clu_parameters[p]:>10}|\n"
+        if isinstance(self.data_sample, pd.DataFrame):
+            s += f"+{'-' * 30}+\n" \
+                 f"|{'Sample Info':^30}|\n" \
+                 f"+{'-' * 30}+\n" \
+                 f"|{'Sample frac':<20}{self.frac:>10}|\n" \
+                 f"|{'Sample rows number':<20}{self.data_sample.shape[0]:>10}|\n"
+        s += f"+{'-' * 30}+\n"
+        return s
