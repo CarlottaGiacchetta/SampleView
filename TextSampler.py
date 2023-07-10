@@ -1,6 +1,6 @@
 from clustering.algorithms import perform_cluster
 from clustering.evaluation import evaluate_clusters
-from clustering.utils import plot_clusters, pca
+from clustering.utils import plot_k_means_clusters, plot_som_clusters, pca
 
 from Embedding import perform_embedding
 
@@ -86,7 +86,11 @@ class SampleView:
         return evaluate_clusters(self.vec.values, self.data['cluster_labels'], metric)
 
     def plot_clusters(self):
-        plot_clusters(self.variables, self.data['cluster_labels'])
+        if self.clu_parameters['algo'] == 'k-means':
+            plot_k_means_clusters(self.variables, self.data['cluster_labels'])
+        elif self.clu_parameters['algo'] == 'SOM':
+            plot_som_clusters(self.data['cluster_labels'], self.clu_parameters['map_size'])
+
 
     def get_embeddings_params(self) -> Dict:
         return self.emb_model_params
