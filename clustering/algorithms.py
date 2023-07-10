@@ -6,7 +6,7 @@ from sklearn.cluster import KMeans
 from clustering.utils import get_best_n_clusters
 
 
-def _kmeans_clustering(data: pd.DataFrame, n_clusters: int = None, seed: int = 42) -> Tuple[Any, dict[str, int]]:
+def _kmeans_clustering(data: pd.DataFrame, n_clusters: int = None, seed: int = None) -> Tuple[Any, dict[str, int]]:
 
     if not n_clusters:
         n_clusters = get_best_n_clusters(data, seed)
@@ -18,7 +18,7 @@ def _kmeans_clustering(data: pd.DataFrame, n_clusters: int = None, seed: int = 4
 
 
 def _som_clustering(data: pd.DataFrame, map_size: Tuple[int, int] = (5, 5),
-                    n_epochs: int = 100, seed: int = 42) -> Tuple[list[Any], dict[str, int | tuple[int, int]]]:
+                    n_epochs: int = 100, seed: int = None) -> Tuple[list[Any], dict[str, int | tuple[int, int]]]:
     # Dimensioni della mappa SOM -> ne abbiamo scelta una di 25 celle in modo tale da avere 25 potenziali clusters.
     data = data.values
     # Si dice la dimensione della som, la grandezza dei vettori della som, la forma delle celle
