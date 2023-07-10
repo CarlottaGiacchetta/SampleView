@@ -56,7 +56,6 @@ class SampleView:
         self.text_var = text_var
 
         if text_var:
-            # X, _ = make_blobs(n_samples=10000, n_features=4, random_state=1)
             self.vec, self.emb_model_params = perform_embedding(self.data[text_var], emb_algo=emb_algo,
                                                                 vector_size=vector_size, window=window,
                                                                 min_count=min_count, workers=workers,
@@ -64,9 +63,9 @@ class SampleView:
 
             if use_pca:
                 self.variables = pca(self.vec, self.seed)
-
             else:
                 self.variables = self.vec
+
 
             self.data['cluster_labels'], self.clu_parameters = perform_cluster(data=self.variables,
                                                                                cluster_algo=cluster_algo,
@@ -74,10 +73,13 @@ class SampleView:
                                                                                seed=seed)
             self.sampling_var.add('cluster_labels')
             self.sampling_var = list(self.sampling_var)
+
         self.data_sample = self.data.groupby(self.sampling_var).apply(
             lambda x: x.sample(int(round(x.shape[0] * frac, 0))))
+
         # self.sample, _ = train_test_split(self.data, train_size=frac, stratify=self.data[sampling_var],
         # random_state=seed)
+        self.data_sample.drop('cluster_labels', axis=1, inplace=True)
         return self.data_sample
 
     def cluster_evaluation(self, metric: str = 'silhouette_score') -> float:
