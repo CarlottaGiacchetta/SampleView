@@ -6,6 +6,7 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
 from collections import Counter
 import matplotlib.pyplot as plt
+from matplotlib.patches import RegularPolygon
 
 
 def pca(df: pd.DataFrame, seed, var_threshold: float = 0.95) -> pd.DataFrame:
@@ -42,7 +43,7 @@ def get_best_n_clusters(data: pd.DataFrame, seed: int = 42) -> int:
     return best_n_clusters
 
 
-def plot_som_clusters(labels, map_size):
+def plot_som_clusters(som, labels, map_size):
     all_cells = [(x, y) for x in range(0, map_size[0]) for y in range(0, map_size[1])]
     stats_map = [x for i, x in enumerate(all_cells) if i in labels]
     occurrences = Counter(labels)
@@ -51,21 +52,31 @@ def plot_som_clusters(labels, map_size):
         stats_map[c[0], c[1]] = occurrences[i]
 
     stats_map_normalized = stats_map / np.sum(stats_map)
-    # (stats_map - np.min(stats_map)) / (np.max(stats_map) - np.min(stats_map))
-    print(stats_map_normalized.T)
-    plt.figure(figsize=(map_size[0], map_size[1]))
-    plt.pcolormesh(stats_map_normalized.T)
-    plt.colorbar(label='% Statistical Units')
-    plt.xlabel('Dimension 1')
-    plt.ylabel('Dimension 2')
-    plt.title('SOM Map')
+    print(stats_map_normalized)
+    # plot hexagonal topology
+    f = plt.figure(figsize=(10, 10))
+    ax = f.add_subplot(111)
+    ax.set_aspect('equal')
+    xx, yy = som.get_euclidean_coordinates()
+    cmap = plt.cm.Purples
+    norm = plt.Normalize(vmin=0, vmax=1)
+    cbar = plt.colorbar(plt.cm.ScalarMappable(cmap=cmap, norm=norm), ax=ax)
+    cbar.set_label('% of statistical units')
 
     # se non vuoi che si veda il numero di unità statstiche associate elimina
     for i in range(map_size[0]):
         for j in range(map_size[1]):
-            if stats_map[i, j] > 0:
-                plt.text(i + 0.5, j + 0.5, f'{int(stats_map[i, j])} ', ha='center', va='center', color='white',
-                         fontsize=8)
+            wy = yy[(i, j)] * 2 / np.sqrt(3) * 3 / 4
+            hex = RegularPolygon((xx[(i, j)], wy), numVertices=6, radius=.95 / np.sqrt(3),
+                                 facecolor=cmap(stats_map_normalized[i, j]), edgecolor='grey')
+            ax.add_patch(hex)
+
+    for cell in all_cells:
+        wx, wy = som.convert_map_to_euclidean(cell)
+        wy = wy * 2 / np.sqrt(3) * 3 / 4
+        plt.plot(wx, wy, markerfacecolor='None',
+                 markeredgecolor='black', markersize=12, markeredgewidth=2)
+        ax.text(wx, wy, stats_map_normalized[cell[0], cell[1]], ha='center', va='center', fontsize=12)
 
     plt.show()
 
