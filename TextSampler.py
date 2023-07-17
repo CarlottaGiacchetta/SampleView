@@ -39,9 +39,11 @@ class SampleView:
         self.sampling_var = None
         self.text_var = None
         self.emb_model_params = None
+        self.embeddings_model = None
         self.vec = None
         self.variables = None
         self.clu_parameters = None
+        self.clustering_models = None
         self.data_sample = None
 
     def sample(self, frac: float, sampling_var: List[str], text_var: str = None,
@@ -66,11 +68,12 @@ class SampleView:
             else:
                 self.variables = self.vec
 
+            self.clustering_models, self.data['cluster_labels'], self.clu_parameters = perform_cluster(
+                data=self.variables,
+                cluster_algo=cluster_algo,
+                n_clusters=n_clusters,
+                seed=seed)
 
-            self.data['cluster_labels'], self.clu_parameters = perform_cluster(data=self.variables,
-                                                                               cluster_algo=cluster_algo,
-                                                                               n_clusters=n_clusters,
-                                                                               seed=seed)
             self.sampling_var.add('cluster_labels')
             self.sampling_var = list(self.sampling_var)
 
@@ -89,8 +92,7 @@ class SampleView:
         if self.clu_parameters['algo'] == 'k-means':
             plot_k_means_clusters(self.variables, self.data['cluster_labels'])
         elif self.clu_parameters['algo'] == 'SOM':
-            plot_som_clusters(self.data['cluster_labels'], self.clu_parameters['map_size'])
-
+            plot_som_clusters(self.clustering_models, self.data['cluster_labels'], self.clu_parameters['map_size'])
 
     def get_embeddings_params(self) -> Dict:
         return self.emb_model_params
