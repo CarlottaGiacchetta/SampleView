@@ -10,6 +10,7 @@ import torch
 
 
 def BERT_model(data: pd.Series, model_name: str) -> Tuple[pd.DataFrame, Dict]:
+    print('dddddddddddddddddddddddd')
     # Carica il tokenizer di BERT
     tokenizer = BertTokenizer.from_pretrained(model_name)
 
@@ -40,10 +41,12 @@ def BERT_model(data: pd.Series, model_name: str) -> Tuple[pd.DataFrame, Dict]:
         document_vector = torch.mean(last_hidden_state, dim=1)
 
         # Aggiungi il vettore del documento alla lista
-        document_vectors.append(document_vector.flatten())
-        #document_vectors[document] = document_vector.flatten()
+        document_vectors.append(document_vector.flatten().tolist())
+        #document_vectors[document] = document_vector.flatten().tolist()
 
-    df = pd.DataFrame({'vec': document_vectors})
+    #df = pd.DataFrame({'vec': document_vectors})
+    df = pd.DataFrame(document_vectors, index=range(0, len(document_vectors)))
+    #df = pd.DataFrame.from_dict(document_vectors, orient='index')
 
     return df, {'model': model_name}
 
@@ -79,6 +82,7 @@ def word2vec(data: pd.Series, vector_size: int = 100, window: int = 5, min_count
         document_vectors.append(np.mean(vec, axis=0))
 
     df = pd.DataFrame({'vec': document_vectors})
+    # df = pd.DataFrame(document_vectors, index=range(0, len(document_vectors)))
 
     return df, {'model': 'Word2Vec', 'vector_size': vector_size, 'window': window, 'min_count': min_count,
                 'epochs': epochs}
