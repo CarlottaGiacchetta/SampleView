@@ -47,6 +47,7 @@ def perform_cluster(data: pd.DataFrame,
     if cluster_algo == 'kmeans':
         clu_parameters = _kmeans_clustering.__code__.co_varnames[:_kmeans_clustering.__code__.co_argcount]
         kwargs = {key: value for key, value in kwargs.items() if key in clu_parameters}
+        print(kwargs)
         model, labels, clu_parameters = _kmeans_clustering(data, **kwargs)
     elif cluster_algo == 'SOM':
         clu_parameters = _som_clustering.__code__.co_varnames[:_som_clustering.__code__.co_argcount]

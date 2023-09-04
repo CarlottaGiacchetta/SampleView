@@ -50,7 +50,7 @@ class SampleView:
                use_pca: bool = True, cluster_algo: str = 'kmeans', n_clusters: int = None,
                emb_algo: str = 'Doc2Vec', vector_size: int = 100, window: int = 5,
                min_count: int = 1, workers: int = 3, emb_epochs: int = 10,
-               seed: int = 42, **kwargs):
+               seed: int = None, **kwargs):
 
         self.frac = frac
         self.seed = seed
@@ -63,6 +63,7 @@ class SampleView:
                                                                 min_count=min_count, workers=workers,
                                                                 emb_epochs=emb_epochs, **kwargs)
 
+            #print(self.vec)
             if use_pca:
                 self.variables = pca(self.vec, self.seed)
             else:
@@ -72,17 +73,22 @@ class SampleView:
                 data=self.variables,
                 cluster_algo=cluster_algo,
                 n_clusters=n_clusters,
-                seed=seed)
+                seed=self.seed)
+
+            #print(self.get_embeddings_vec())
+            self.data['vec'] = self.get_embeddings_vec()
 
             self.sampling_var.add('cluster_labels')
             self.sampling_var = list(self.sampling_var)
 
         self.data_sample = self.data.groupby(self.sampling_var).apply(
-            lambda x: x.sample(int(round(x.shape[0] * frac, 0))))
+            lambda x: x.sample(int(round(x.shape[0] * frac, 0)), random_state=self.seed))
+
+        self.data_sample.drop([x for x in self.sampling_var if x in self.data_sample.columns], axis=1, inplace=True)
 
         # self.sample, _ = train_test_split(self.data, train_size=frac, stratify=self.data[sampling_var],
         # random_state=seed)
-        self.data_sample.drop('cluster_labels', axis=1, inplace=True)
+        #self.data_sample.drop('cluster_labels', axis=1, inplace=True)
         return self.data_sample
 
     def cluster_evaluation(self, metric: str = 'silhouette_score') -> float:
@@ -98,7 +104,7 @@ class SampleView:
         return self.emb_model_params
 
     def get_embeddings_vec(self) -> np.ndarray:
-        return self.vec.values
+        return self.vec.values.tolist()
 
     def get_pca_variables(self) -> pd.DataFrame:
         return self.variables

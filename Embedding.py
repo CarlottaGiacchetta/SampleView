@@ -1,5 +1,5 @@
 from typing import Tuple, Any, Dict
-
+from tqdm import tqdm
 import pandas as pd
 import numpy as np
 from gensim.models import Doc2Vec, Word2Vec
@@ -20,7 +20,7 @@ def BERT_model(data: pd.Series, model_name: str) -> Tuple[pd.DataFrame, Dict]:
     # Inizializza una lista per i vettori di output
     document_vectors = list()
     # Itera sui documenti
-    for document in data:
+    for document in tqdm(data, desc='GET VECTORS'):
         # Tokenizzazione del documento
         tokens = tokenizer.encode(document, add_special_tokens=True)
 
